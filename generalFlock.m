@@ -3,7 +3,7 @@
 %% Simulates 3 zones model of alignment, attraction & repulsion with N birds
 %% With boundary conditions for square or circle
 
-clear;
+%clear;
 close;
 if ~exist('s','var')
     s = rng;
@@ -36,15 +36,15 @@ P.absorb = 1;  % absorbtion scale of reflexive BC (percent)
 
 % Strength of flocking attributes
 P.IOphi = 1;      % toggles(scales) alignment
-P.IOpsi_att = .01; % toggles attraction (.1 recommended)
-P.IOpsi_rep = .1; % toggles repulsion
-P.IOw = 1;        % scales soft boundary repulsion strength
+P.IOpsi_att = 1; % toggles attraction (.1 recommended)
+P.IOpsi_rep = 1; % toggles repulsion
+P.IOw = 3;        % scales soft boundary repulsion strength
 P.IOpro = 1;      % toggles propulsion
 
 % Distances of function effects
-P.a = 1;      % repulsion|a|neutral
-P.b = 3;      % neutral|b|attraction
-P.c = 10;     % attraction|c|neutral
+P.a = 2;      % repulsion|a|neutral
+P.b = 4;      % neutral|b|attraction
+P.c = 8;     % attraction|c|neutral
 P.d = 5;      % distance for boundary force
 
 % Graph
@@ -69,8 +69,8 @@ Soft causes soft-potential repulsion where birds avoid impacting the boundary in
 %}
 
 % circular boundaries       
-BCcircImpact = 0;
-BCcircReflect = 1;
+BCcircImpact = 1;
+BCcircReflect = 0;
 BCcircSoft = 0;
 
 % square boundaries
@@ -163,8 +163,13 @@ for n=0:P.dt:t
         BoundY=P.R*sin(theta);
     elseif BCcircReflect
         str = 'noBounds';
-        [X_new,dV] = RK4birds(X,V,P,str);
-        [X,V] = circleReflex(X,V,X_new,dV,P);
+        for i = 1:P.N       % Push bird in if outside boundary (Dirty)
+            if norm(X(i,:)) > P.R 
+                X(i,:) = P.R*X(i,:)/norm(X(i,:));
+            end
+        end
+        [X_new,V_new] = RK4birds(X,V,P,str);
+        [X,V] = circleReflex(X,V,X_new,V_new,P);
         theta=linspace(0,2*pi);
         BoundX=P.R*cos(theta);
         BoundY=P.R*sin(theta);
@@ -210,7 +215,7 @@ for n=0:P.dt:t
         
         if ~isempty(BoundX)
             hold on;
-            plot(BoundX,BoundY)         %plot the boundary
+            plot(BoundX,BoundY,'k')         %plot the boundary
             hold off;
         end
         
@@ -237,8 +242,8 @@ for n=0:P.dt:t
 
     
         shg
-        %pause(pauseTime)      %pause to make movie
-        drawnow
+        pause(pauseTime)      %pause to make movie
+        %drawnow
     end
 end
 
