@@ -18,7 +18,7 @@ tic;
 
 % Simulation
 P.N = 100;          % number of birds
-t = 100;            % time to run
+t = 500;            % time to run
 P.dt = .1;          % time step
 
 % Initialization 
@@ -31,7 +31,7 @@ Vshift = 1;         % shift of V
 P.R = 10;         % radius of circle boundary
 P.L = 10;         % length of apothem
 
-P.absorb = 1;  % absorbtion scale of reflexive BC (percent)
+P.absorb = .8;  % absorbtion scale of reflexive BC (percent)
                 % absorbancy = 2 - absorb (in function)
 
 % Strength of flocking attributes
@@ -109,54 +109,7 @@ mkdir(FileLocation,NewFolder)%creates new folder
 %%-----------------------------------------%%
 %%--------------- Time loop ---------------%%
 for n=0:P.dt:t
-%     %% Finding change in V
-%     % Set up matrices of differences (xj-xi) and (vj-vi) in components
-%     onecol = ones(size(X,1),1);
-%     Mat_dXx = X(:,1)*onecol'-onecol*(X(:,1))'; % matrices of diffs in X
-%     Mat_dXy = X(:,2)*onecol'-onecol*(X(:,2))';
-%     Mat_dVx = V(:,1)*onecol'-onecol*(V(:,1))'; % matrices of diffs in V
-%     Mat_dVy = V(:,2)*onecol'-onecol*(V(:,2))';
-%     
-%     % Setting up matrix of phi and psi
-%     Mat_r = sqrt(Mat_dXx.^2 + Mat_dXy.^2);    % norm of (xj-xi)
-%     
-%     Mat_phi = phi(Mat_r,P);
-%     Mat_psi = psi(Mat_r,P);
-%     
-%     % Direction of attraction/repulsion
-%     Mat_xdir = Mat_dXx./(Mat_r+diag(ones(P.N,1)));
-%     Mat_ydir = Mat_dXy./(Mat_r+diag(ones(P.N,1)));
-%     
-%     % Self-propulsion
-%     NormSqV = V(:,1).^2+V(:,2).^2;  % Norm squared of V
-% %     Mat_NormSqV = [NormSq_dV,NormSq_dV];
-%     proVx = pro(NormSqV,V(:,1),P);
-%     proVy = pro(NormSqV,V(:,2),P);
-%     
-%     % Change in velocity calculation
-%     dVx = 1/P.N*sum(Mat_phi.*Mat_dVx + Mat_psi.*Mat_xdir)'+proVx;
-%     dVy = 1/P.N*sum(Mat_phi.*Mat_dVy + Mat_psi.*Mat_ydir)'+proVy;
-%     dV = [dVx, dVy];  % change in V
-    
-    
     %% Boundary Conditions
-%     BoundX = [];    % For boundary of X
-%     X_new = X + P.dt*V; % Potential new X (depending on the boundary)
-    
-%     [X,V] = squareReflex(X,V,X_new,dV,P);
-%     [X,V,BoundX,BoundY] = squareSoft(X,V,P);
-%     [X,V,BoundX,BoundY] = squareImpact(X,V,P);
-%     [X,V,BoundX,BoundY] = circleReflex(X,V,X_new,P);
-%     [X,V,BoundX,BoundY] = circleSoft(X,V,X_new,P);
-%     [X,V,BoundX,BoundY] = circleImpact(X,V,X_new,P);
-%     
-%     % Euler's Method
-%    V = V + P.dt*dV;        % apply flock after bc
-%     if isempty(BoundX)
-%         X = X_new;
-%     end
-    
-    
     % New Birds
     % Boundaries and system dynamics
     if BCcircImpact
