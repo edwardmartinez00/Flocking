@@ -1,6 +1,7 @@
-%% V_new = squareImpact(X,V,P)
+%% dV = squareSoft(X,V,P)
 %
-% Checks points at a soft square boundary using only impact as a reference
+% Finds change in velocity at a soft square boundary with both impact 
+% and closest boundary
 %
 % X, position vector
 % V, velocity vector
@@ -8,33 +9,27 @@
 % P.L, apothem of square
 % P.d, distance that W occurs in
 % P.dt, time step size
-%
-% BoundaryX, vector of 4 conditions for boundary of X
-% BoundaryY, vector of 4 conditions corresponding to boundary of Y
-function [X,V,BoundaryX,BoundaryY] = squareSoft(X,V,P)
+function dV = squareSoft(X,V,P)
     V_functions;
 
-    for i = 1:P.N
-        % Time to cross right(left...) boundary
-        dtR = (P.L-X(i,1))/V(i,1);
-        dtL = (-P.L-X(i,1))/V(i,1);
-        dtU = (P.L-X(i,2))/V(i,2);
-        dtD = (-P.L-X(i,2))/V(i,2);
-        impactTime = [dtR dtL dtU dtD];
+    % calculate acceleration without boundary conditions
+    dV = noBounds(X,V,P);
     
-        % Finding boundary affecting vectors
-        M = max(impactTime);
-        impactTime(impactTime < 0) = M+1; % Set negative vectors large
-        dt_star = min(impactTime);      % Time till impact closest wall
+    % point on boundary in front of birds
+    X_star = sqboundaryImpact(X,V,P);        % would be impact point
     
-        % Calculating new X and V
-        x_star = X(i,:) + dt_star*V(i,:);   % Wouldbe impact point
-        diffstar = x_star-X(i,:);
-        r = norm(diffstar);     % Distance of bird to impact
-        v_new = V(i,:) - P.dt*w(r,P)*(diffstar/r);  % Euler's Method
-        X(i,:) = x_star + (P.dt-dt_star)*V(i,:);
-        V(i,:) = v_new;     % Update V
-    end
-BoundaryX=[linspace(-P.L,P.L),-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100)];
-BoundaryY=[-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100),linspace(-P.L,P.L)];             
+    % point on boundary closest to birds
+    X_hat = sqboundaryDistance(X,P);    % closest point 
+    
+    % Calculating distance to impact
+    D_star = X_star-X;
+    r_star = sqrt(sum(D_star.^2,2));
+    r_star = r_star*[1 1];    
+    
+    % Calculating distance to closest wall
+    D_hat = X_hat-X;
+    r_hat = sqrt(sum(D_hat.^2,2));
+    r_hat = r_hat*[1 1];
+    
+    dV = dV - w(r_star,P).*(D_hat./r_hat);             
 end

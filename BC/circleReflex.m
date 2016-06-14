@@ -1,6 +1,6 @@
-%% [X,V,BoundaryX,BoundaryY] = circleReflex(X,V,X_new,P)
+%% dV = circleReflex(X,V,P)
 %
-% Checks points at a reflexive/absorbant circle boundary
+% Finds change in velocity at a reflexive/absorbant circle boundary
 %
 % X, position vector (2 columns)
 % V, velocity vector (2 columns)
@@ -9,9 +9,6 @@
 % P.R, radius of circle
 % P.absorb, boundary absorb proportion
 % P.dt, time step size
-%
-% BoundaryX, vector of 4 conditions for boundary of X
-% BoundaryY, vector of 4 conditions corresponding to boundary of Y
 function [X_new,V_new] = circleReflex(X,V,X_new,V_new,P)
     absorbancy = 2 - P.absorb;
     
@@ -26,7 +23,7 @@ function [X_new,V_new] = circleReflex(X,V,X_new,V_new,P)
             normal = X(i,:)/norm(X(i,:));               % normal vector
             
             V_new(i,:) = V(i,:) - absorbancy*dot(V(i,:),normal)*normal; % change only the things in new
-            X_new(i,:) = x_star + (P.dt-dt_star)*V(i,:);
+            X_new(i,:) = x_star + (P.dt-dt_star)*V_new(i,:);
         end
     end
     

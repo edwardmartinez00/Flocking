@@ -63,20 +63,24 @@ Title='plot';%name prefix for saved files
 The first boundary condition with value 1 will be used.
 If all values are 0, there will be no boundary conditions.
 
-Impact causes soft-potential repulsion where birds avoid impacting the boundary closest to them.
+Impact causes soft-potential repulsion where birds avoid impacting the boundary in front of them.
 Reflect causes reflection with absorbtion as specified above.
-Soft causes soft-potential repulsion where birds avoid impacting the boundary in front of them.
+Soft causes soft-potential repulsion where birds avoid impacting the boundary in front of them 
+and the boundary closest to them.
+Proximity causes soft-potential repulsion where birds avoid impacting the boundary closest to them.
 %}
 
 % circular boundaries       
-BCcircImpact = 1;
+BCcircImpact = 0;
 BCcircReflect = 0;
 BCcircSoft = 0;
+BCcircProximity = 0;
 
 % square boundaries
 BCsqImpact = 0;
-BCsqReflect = 0;
+BCsqReflect = 1;
 BCsqSoft = 0;
+BCsqProximity = 0;
 %% V' functions
 
 %addpath('/Users/student/Documents/MATLAB/Flocking');
@@ -179,19 +183,42 @@ for n=0:P.dt:t
         theta=linspace(0,2*pi);
         BoundX=P.R*cos(theta);
         BoundY=P.R*sin(theta);
+    elseif BCcircProximity
+        str = 'circleProximity';
+        [X,V] = RK4birds(X,V,P,str);
+        theta=linspace(0,2*pi);
+        BoundX=P.R*cos(theta);
+        BoundY=P.R*sin(theta);
+%----------------------------------------------------        
     elseif BCsqImpact
         str = 'squareImpact';
-        [X,V] = RKsqImpact(X,V,P,str);
+        [X,V] = RK4birds(X,V,P,str);
         BoundX=[linspace(-P.L,P.L),-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100)];
         BoundY=[-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100),linspace(-P.L,P.L)]; 
     elseif BCsqReflect
         str = 'noBounds';
-        [X_new,dV] = RK4birds(X,V,P,str);
-        [X,V] = squareReflex(X,V,X_new,dV,P);
+%         for i = 1:P.N
+%             if (X(i,1)>P.L)
+%                 X(i,1) = P.L;
+%             elseif (X(i,1)<-P.L)
+%                 X(i,1) = -P.L;
+%             elseif (X(i,2)>P.L)
+%                 X(i,2) = P.L;
+%             elseif (X(i,2)<-P.L)
+%                 X(i,2) = -P.L;
+%             end
+%         end
+        [X_new,V_new] = RK4birds(X,V,P,str);
+        [X,V] = squareReflex(X,V,X_new,V_new,P);
         BoundX=[linspace(-P.L,P.L),-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100)];
         BoundY=[-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100),linspace(-P.L,P.L)]; 
     elseif BCsqSoft
         str = 'squareSoft';
+        [X,V] = RK4birds(X,V,P,str);
+        BoundX=[linspace(-P.L,P.L),-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100)];
+        BoundY=[-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100),linspace(-P.L,P.L)]; 
+    elseif BCsqProximity
+        str = 'squareProximity';
         [X,V] = RK4birds(X,V,P,str);
         BoundX=[linspace(-P.L,P.L),-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100)];
         BoundY=[-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100),linspace(-P.L,P.L)]; 
