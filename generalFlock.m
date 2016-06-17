@@ -3,7 +3,7 @@
 %% Simulates 3 zones model of alignment, attraction & repulsion with N birds
 %% With boundary conditions for square or circle
 
-%clear;
+%clear('s');
 close;
 if ~exist('s','var')
     s = rng;
@@ -31,7 +31,7 @@ Vshift = 1;         % shift of V
 P.R = 10;         % radius of circle boundary
 P.L = 10;         % length of apothem
 
-P.absorb = .8;  % absorbtion scale of reflexive BC (percent)
+P.absorb = .9;  % absorbtion scale of reflexive BC (percent)
                 % absorbancy = 2 - absorb (in function)
 
 % Strength of flocking attributes
@@ -150,17 +150,27 @@ for n=0:P.dt:t
         BoundY=[-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100),linspace(-P.L,P.L)]; 
     elseif BCsqReflect
         str = 'noBounds';
-%         for i = 1:P.N
-%             if (X(i,1)>P.L)
+        if n>= 40
+        for i = 1:P.N
+            rounding = 4;
+            if (round(X(i,1),rounding)>P.L)
 %                 X(i,1) = P.L;
-%             elseif (X(i,1)<-P.L)
+                warning('Bird %i out:', i);
+            elseif (round(X(i,1),rounding)<-P.L)
 %                 X(i,1) = -P.L;
-%             elseif (X(i,2)>P.L)
+                warning('Bird %i out:', i);
+            elseif (round(X(i,2),rounding)>P.L)
 %                 X(i,2) = P.L;
-%             elseif (X(i,2)<-P.L)
+                warning('Bird %i out:', i);
+            elseif (round(X(i,2),rounding)<-P.L)
 %                 X(i,2) = -P.L;
-%             end
+                warning('Bird %i out:', i);
+            end
+        end
+%         if n >= 40.4
+%             'uh';
 %         end
+        end
         [X_new,V_new] = RK4birds(X,V,P,str);
         [X,V] = squareReflex(X,V,X_new,V_new,P);
         BoundX=[linspace(-P.L,P.L),-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100)];
@@ -188,7 +198,7 @@ for n=0:P.dt:t
     
     %% Plotting
     if shouldPlot
-        quiver(X(:,1),X(:,2),V(:,1),V(:,2),0)
+        quiver(X(:,1),X(:,2),V(:,1),V(:,2),0,'k')
         axis([-window window -window window],'square');         %window size
         xlabel('x'); ylabel('y');
         title(['t = ', num2str(n,'%10.2f')]);        %title with time stamp
