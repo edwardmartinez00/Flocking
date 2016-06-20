@@ -18,8 +18,8 @@ function dV = noBounds(X,V,P)
     Mat_psi = Psi(Mat_r,P);
     
     % Direction of attraction/repulsion
-    Mat_xdir = Mat_dXx./(Mat_r+diag(ones(P.N,1)));
-    Mat_ydir = Mat_dXy./(Mat_r+diag(ones(P.N,1)));
+    Mat_xdir = Mat_dXx./(Mat_r+diag(ones(P.N,1))+realmin);
+    Mat_ydir = Mat_dXy./(Mat_r+diag(ones(P.N,1))+realmin);
     
     % Self-propulsion
     NormSqV = V(:,1).^2+V(:,2).^2;  % Norm squared of V

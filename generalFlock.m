@@ -12,13 +12,15 @@ rng(s);
 % addpath('/Users/student/Documents/MATLAB/Flocking/BC');
 % addpath('C:\Users\thatmathguy\Documents\MCTP\MATLAB\Flocking\BC');
 % addpath('C:\Users\thatmathguy\Documents\MCTP\MATLAB\Flocking\Save');
+addpath('C:\Users\thatmathguy\Documents\MCTP\MATLAB\Scott Code\Flocking-Control\Flocking-Control\BC');
+addpath('C:\Users\thatmathguy\Documents\MCTP\MATLAB\Scott Code\Flocking-Control\Flocking-Control\Save');
 tic;
 
 %% ---------  Parameters  --------- %%
 
 % Simulation
 P.N = 200;          % number of birds
-t = 50;            % time to run
+t = 500;            % time to run
 P.dt = .1;          % time step
 
 % Initialization 
@@ -61,13 +63,13 @@ V_limit = sqrt(2);            % "limit" on external dog's speed (speed will grow
 
 % Internal Dog
 P.DogInternal = 1;          % toggle internal dog
-P.nu_dog = 0.01;            % control penalty for internal dog
+P.nu_dog = 0.001;            % control penalty for internal dog
 
 % Dog
 P.d = 5;                  % distance where birds "feel" dog
 P.sD = 10;                 % strength of dog repulsion      
 P.neighbors = 1;            % dog follows closest bird if 0, follows center of "neighborhood" if 1
-P.neighborhood = 4;         % dog follows birds within neighborhood
+P.neighborhood = 6;         % dog follows birds within neighborhood
 
 % Graph
 shouldPlot = 1;     % logical operator, 1 for plotting
@@ -82,9 +84,9 @@ P.RK4 = 1;              % logical operator, 1 for Runge-Kutta (RK4) method
 P.RK2 = 0;              % logical operator, 1 for improved Euler (RK2) method
 
 % Saving
-% FileLocation='C:\Users\thatmathguy\Documents\MCTP\MATLAB';%where to create new folder
-% NewFolder='saveframetest';%name of new folder to be created
-% Title='plot';%name prefix for saved files
+FileLocation='C:\Users\thatmathguy\Documents\MCTP\MATLAB';%where to create new folder
+NewFolder='saveframetest';%name of new folder to be created
+Title='plot';%name prefix for saved files
 
 %% ------------ Boundary Choice --------------- %%
 %{
@@ -106,7 +108,7 @@ BCcircProximity = 0;
 
 % square boundaries
 BCsqImpact = 0;
-BCsqReflect = 0;
+BCsqReflect = 1;
 BCsqSoft = 0;
 BCsqProximity = 0;
 %% V' functions
@@ -134,11 +136,12 @@ X = X0scale*(2*rand(P.N,2)-Xshift);
 V = V0scale*(2*rand(P.N,2)-Vshift);
 
 %% Initialize SaveFrame
-% if exist(strcat(FileLocation,'\',NewFolder),'file')
-%     rmdir(strcat(FileLocation,'\',NewFolder),'s');  % delete folder if already exists
-% end
-% mkdir(FileLocation,NewFolder)%creates new folder
-
+if save == 1
+    if exist(strcat(FileLocation,'\',NewFolder),'file')
+        rmdir(strcat(FileLocation,'\',NewFolder),'s');  % delete folder if already exists
+    end
+    mkdir(FileLocation,NewFolder)%creates new folder
+end
 %% Variance allocation
 % varX = zeros(t/P.dt+1,1);
 % varV = zeros(t/P.dt+1,1);
@@ -151,6 +154,7 @@ for n=0:P.dt:t
     %% Boundary Conditions
     % New Birds
     % Boundaries and system dynamics
+    P.Vd = [cos(10*n) sin(10*n)]; 
     if BCcircImpact
         str = 'circleImpact';       % for creating function pointer
         [X,V] = RK4birds(X,V,P,str);
@@ -189,8 +193,14 @@ for n=0:P.dt:t
         BoundY=[-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100),linspace(-P.L,P.L)]; 
     elseif BCsqReflect
         str = 'noBounds';
-        if n>= 40
+%         if n>= 40
         for i = 1:P.N
+            if isnan(X(i,1))
+                error('Shit')
+            end
+            if isnan(X(i,2))
+                error('Shit')
+            end
             rounding = 4;
             if (round(X(i,1),rounding)>P.L)
 %                 X(i,1) = P.L;
@@ -206,10 +216,10 @@ for n=0:P.dt:t
                 warning('Bird %i out:', i);
             end
         end
-%         if n >= 40.4
+%         if n >= 15.4
 %             'uh';
 %         end
-        end
+%         end
         [X_new,V_new] = RK4birds(X,V,P,str);
         [X,V] = squareReflex(X,V,X_new,V_new,P);
         BoundX=[linspace(-P.L,P.L),-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100)];
@@ -257,9 +267,9 @@ for n=0:P.dt:t
     
      %% Plotting
     if shouldPlot
-        quiver(X(:,1),X(:,2),V(:,1),V(:,2),0,'k','linewidth',1.5)
+        quiver(X(:,1),X(:,2),V(:,1),V(:,2),0,'linewidth',1.5)
         if (follow)
-            axis([centerXx-Window-M centerXx+Window+M centerXy-Window-M centerXy+Window+M],'square');         %window size
+            axis([centerXx-window-M centerXx+window+M centerXy-window-M centerXy+window+M],'square');         %window size
         else
             axis([-window-M window+M -window-M window+M],'square');
         end
