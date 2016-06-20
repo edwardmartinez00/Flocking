@@ -31,4 +31,31 @@ function dV = noBounds(X,V,P)
     dVx = 1/P.N*sum(Mat_phi.*Mat_dVx + Mat_psi.*Mat_xdir)'+proVx;
     dVy = 1/P.N*sum(Mat_phi.*Mat_dVy + Mat_psi.*Mat_ydir)'+proVy;
     dV = [dVx, dVy];  % change in V
+    
+    % calculate distances between dog and each bird for repulsion purposes
+    if (P.DogExternal)
+        % calculate distance between dog and each bird
+        Dog_X = ones(P.N,1)*P.X_dog;
+        Mat_Dog = Dog_X-X;
+        Dog_D = sqrt((Mat_Dog(:,1)).^2+(Mat_Dog(:,2)).^2);
+        
+        % ensure that the dog does not follow or repel itself
+        M = max(Dog_D);
+        Dog_D(1,:) = max(M,P.d)+1;
+    elseif (P.DogInternal)
+        % calculate distance between dog and each bird
+        Dog_X = ones(P.N,1)*X(1,:);
+        Mat_Dog = Dog_X-X;
+        Dog_D = sqrt((Mat_Dog(:,1)).^2+(Mat_Dog(:,2)).^2);
+        
+        % ensure that the dog does not follow or repel itself
+        M = max(Dog_D);
+        Dog_D(1,:) = max(M,P.d)+1;
+    end
+    
+    % if there is a dog in the model, repel the birds
+    if (P.Dog)
+        Dog_D = Dog_D*ones(1,2);
+        dV = dV-P.sD.*w_dog(Dog_D,P).*(Mat_Dog./Dog_D);
+    end
 end    

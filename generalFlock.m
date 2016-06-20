@@ -10,15 +10,15 @@ if ~exist('s','var')
 end
 rng(s);
 % addpath('/Users/student/Documents/MATLAB/Flocking/BC');
-addpath('C:\Users\thatmathguy\Documents\MCTP\MATLAB\Flocking\BC');
-addpath('C:\Users\thatmathguy\Documents\MCTP\MATLAB\Flocking\Save');
+% addpath('C:\Users\thatmathguy\Documents\MCTP\MATLAB\Flocking\BC');
+% addpath('C:\Users\thatmathguy\Documents\MCTP\MATLAB\Flocking\Save');
 tic;
 
 %% ---------  Parameters  --------- %%
 
 % Simulation
-P.N = 100;          % number of birds
-t = 500;            % time to run
+P.N = 200;          % number of birds
+t = 50;            % time to run
 P.dt = .1;          % time step
 
 % Initialization 
@@ -31,14 +31,14 @@ Vshift = 1;         % shift of V
 P.R = 10;         % radius of circle boundary
 P.L = 10;         % length of apothem
 
-P.absorb = .9;  % absorbtion scale of reflexive BC (percent)
+P.absorb = 0;  % absorbtion scale of reflexive BC (percent)
                 % absorbancy = 2 - absorb (in function)
 
 % Strength of flocking attributes
 P.IOphi = 1;      % toggles(scales) alignment
 P.IOpsi_att = 1; % toggles attraction (.1 recommended)
 P.IOpsi_rep = 1; % toggles repulsion
-P.IOw = 3;        % scales soft boundary repulsion strength
+P.IOw = 8;        % scales soft boundary repulsion strength
 P.IOpro = 1;      % toggles propulsion
 
 % Distances of function effects
@@ -47,16 +47,44 @@ P.b = 4;      % neutral|b|attraction
 P.c = 8;     % attraction|c|neutral
 P.d = 5;      % distance for boundary force
 
+% Control Flock
+P.Control = 1;              % toggle control on flock
+P.Vd = [1 0];             % desired velocity of flock
+P.nu = 0.01;              % control penalty for flock
+
+% External Dog
+P.DogExternal = 0;          % toggle external dog
+P.X_dog = [0 -3];         % dog initial position
+P.V_dog = [2 1];          % dog initial velocity
+dog_speed = 1;        % how quickly external dog goes toward closest bird
+V_limit = sqrt(2);            % "limit" on external dog's speed (speed will grow to infinity with no limit)
+
+% Internal Dog
+P.DogInternal = 1;          % toggle internal dog
+P.nu_dog = 0.01;            % control penalty for internal dog
+
+% Dog
+P.d = 5;                  % distance where birds "feel" dog
+P.sD = 10;                 % strength of dog repulsion      
+P.neighbors = 1;            % dog follows closest bird if 0, follows center of "neighborhood" if 1
+P.neighborhood = 4;         % dog follows birds within neighborhood
+
 % Graph
 shouldPlot = 1;     % logical operator, 1 for plotting
 save = 0;           % logical operator, 1 for saving into folder and no pause
 pauseTime = .01;    % pause time between frames
 window = 13;    % size of square window (1+bound recommended)
+follow = 0;         % logical operator, 1 for following the flock (grid on)
+showDog = 0;        % logical operator, 1 to always show dog (if applicable)
+
+% Numerical Method (uses Euler if both 0)
+P.RK4 = 1;              % logical operator, 1 for Runge-Kutta (RK4) method
+P.RK2 = 0;              % logical operator, 1 for improved Euler (RK2) method
 
 % Saving
-FileLocation='C:\Users\thatmathguy\Documents\MCTP\MATLAB';%where to create new folder
-NewFolder='saveframetest';%name of new folder to be created
-Title='plot';%name prefix for saved files
+% FileLocation='C:\Users\thatmathguy\Documents\MCTP\MATLAB';%where to create new folder
+% NewFolder='saveframetest';%name of new folder to be created
+% Title='plot';%name prefix for saved files
 
 %% ------------ Boundary Choice --------------- %%
 %{
@@ -78,27 +106,38 @@ BCcircProximity = 0;
 
 % square boundaries
 BCsqImpact = 0;
-BCsqReflect = 1;
+BCsqReflect = 0;
 BCsqSoft = 0;
 BCsqProximity = 0;
 %% V' functions
+
+% turn on dog function if dog was selected
+if (P.DogInternal) || (P.DogExternal)
+    P.IOw_dog = 1;
+    P.Dog = 1;
+else
+    P.IOw_dog = 0;
+    P.Dog = 0;
+    showDog = 0;
+end
 
 %addpath('/Users/student/Documents/MATLAB/Flocking');
 V_functions;
 
 % phi = @(r) 1./(1+r);    % alignment factor
-% %psi = @(r,a,b) (r>a).*(r<b);    % atrraction/repulsion factor
+% psi = @(r,a,b) (r>a).*(r<b);    % atrraction/repulsion factor
 % psi = @(r,a,b,c) (-(r<a) + (r>b.*r<c));
+
 %% Initial conditions
 
 X = X0scale*(2*rand(P.N,2)-Xshift);
 V = V0scale*(2*rand(P.N,2)-Vshift);
 
 %% Initialize SaveFrame
-if exist(strcat(FileLocation,'\',NewFolder),'file')
-    rmdir(strcat(FileLocation,'\',NewFolder),'s');  % delete folder if already exists
-end
-mkdir(FileLocation,NewFolder)%creates new folder
+% if exist(strcat(FileLocation,'\',NewFolder),'file')
+%     rmdir(strcat(FileLocation,'\',NewFolder),'s');  % delete folder if already exists
+% end
+% mkdir(FileLocation,NewFolder)%creates new folder
 
 %% Variance allocation
 % varX = zeros(t/P.dt+1,1);
@@ -196,16 +235,65 @@ for n=0:P.dt:t
 %     varV(round(n/P.dt+1)) = varbirds(V);
      %meanV(round(n/P.dt+1),:) = mean(V,1)
     
-    %% Plotting
+    % calculate M (for showing dog or not) 
+    M = 0;
+    if (showDog) && (P.DogExternal)
+        Dog_X = ones(P.N,1)*P.X_dog;
+        Mat_Dog = Dog_X-X;
+        Dog_D = sqrt((Mat_Dog(:,1)).^2+(Mat_Dog(:,2)).^2);
+        M = max(Dog_D);
+    elseif (showDog) && (P.DogInternal)
+        Dog_X = ones(P.N,1)*X(1,:);
+        Mat_Dog = Dog_X-X;
+        Dog_D = sqrt((Mat_Dog(:,1)).^2+(Mat_Dog(:,2)).^2);
+        M = max(Dog_D);
+    end
+    
+    % calculate center of flock for following purposes
+    if (follow)
+        centerXx = sum(X(:,1))/P.N;
+        centerXy = sum(X(:,2))/P.N;
+    end
+    
+     %% Plotting
     if shouldPlot
-        quiver(X(:,1),X(:,2),V(:,1),V(:,2),0,'k')
-        axis([-window window -window window],'square');         %window size
+        quiver(X(:,1),X(:,2),V(:,1),V(:,2),0,'k','linewidth',1.5)
+        if (follow)
+            axis([centerXx-Window-M centerXx+Window+M centerXy-Window-M centerXy+Window+M],'square');         %window size
+        else
+            axis([-window-M window+M -window-M window+M],'square');
+        end
         xlabel('x'); ylabel('y');
         title(['t = ', num2str(n,'%10.2f')]);        %title with time stamp
         
         if ~isempty(BoundX)
             hold on;
             plot(BoundX,BoundY,'k')         %plot the boundary
+            hold off;
+        end
+        
+        % update external dog (if applicable)
+        if (P.DogExternal)
+            Dog_X = ones(P.N,1)*P.X_dog;
+            Mat_Dog = Dog_X-X;
+            Dog_D = sqrt((Mat_Dog(:,1)).^2+(Mat_Dog(:,2)).^2);
+            [m,i] = min(Dog_D);
+            dV_dog = dog_speed*[X(i,1)-P.X_dog(1) X(i,2)-P.X_dog(2)];
+            P.X_dog = P.X_dog+P.dt*P.V_dog;
+            P.V_dog = P.V_dog+P.dt*dV_dog;
+            if norm(P.V_dog)>V_limit;
+                P.V_dog = V_limit*P.V_dog./norm(P.V_dog);
+            end
+        end
+        
+        % plot the dog (if applicable)
+        if (P.DogExternal)
+            hold on;
+            quiver(P.X_dog(1),P.X_dog(2),P.V_dog(1),P.V_dog(2),0,'linewidth',2,'color',[1 0 0])
+            hold off;
+        elseif (P.DogInternal)
+            hold on;
+            quiver(X(1,1),X(1,2),V(1,1),V(1,2),0,'linewidth',2,'color',[1 0 0])
             hold off;
         end
         
