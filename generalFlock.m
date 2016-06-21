@@ -105,12 +105,14 @@ BCcircImpact = 0;
 BCcircReflect = 0;
 BCcircSoft = 0;
 BCcircProximity = 0;
+BCcircPortal = 0;
 
 % square boundaries
 BCsqImpact = 0;
 BCsqReflect = 1;
 BCsqSoft = 0;
 BCsqProximity = 0;
+BCsqPortal = 0;
 %% V' functions
 
 % turn on dog function if dog was selected
@@ -185,6 +187,13 @@ for n=0:P.dt:t
         theta=linspace(0,2*pi);
         BoundX=P.R*cos(theta);
         BoundY=P.R*sin(theta);
+    elseif BCcircPortal
+        str = 'noBounds';
+        [X_new,V_new] = RK4birds(X,V,P,str);
+        [X,V] = circlePortal(X,V,X_new,V_new,P);
+        theta=linspace(0,2*pi);
+        BoundX=P.R*cos(theta);
+        BoundY=P.R*sin(theta);
 %----------------------------------------------------        
     elseif BCsqImpact
         str = 'squareImpact';
@@ -234,6 +243,12 @@ for n=0:P.dt:t
         [X,V] = RK4birds(X,V,P,str);
         BoundX=[linspace(-P.L,P.L),-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100)];
         BoundY=[-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100),linspace(-P.L,P.L)]; 
+    elseif BCsqPortal
+        str = 'noBounds';
+        [X_new,V_new] = RK4birds(X,V,P,str);
+        [X,V] = squarePortal(X,V,X_new,V_new,P);
+        BoundX=[linspace(-P.L,P.L),-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100)];
+        BoundY=[-P.L*ones(1,100),linspace(-P.L,P.L),P.L*ones(1,100),linspace(-P.L,P.L)];
     else
         str = 'noBounds';
         [X,V] = RK4birds(X,V,P,str);
