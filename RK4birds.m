@@ -10,17 +10,32 @@ function [X,V] = RK4birds(X,V,P,strBound)
 % addpath('C:\Users\thatmathguy\Documents\MCTP\MATLAB\Flocking\BC');
 BC = str2func(strBound);  % function pointer
 
-
-if (P.Control) && (P.DogExternal)
-    P.Vd = ones(P.N,1)*P.Vd;
-elseif (~P.Control) && (P.DogInternal)
-    P.Control = 1;
-    P.nu = 1000000000;
-    P.nu = [P.nu_dog P.nu_dog; ones(P.N-1,1)*[P.nu P.nu]];
-elseif (P.Control) && (P.DogInternal)
-    P.nu = [P.nu_dog P.nu_dog; ones(P.N-1,1)*[P.nu P.nu]];
-else
-    P.Vd = ones(P.N,1)*P.Vd;
+if (rem(P.n,1)==0) && (P.n<P.N)    % sparse control
+    if (P.Control) && (P.DogExternal)
+        P.Vd = ones(P.N,1)*P.Vd;
+        P.nu = [ones(P.n,1)*[P.nu P.nu]; ones(P.N-P.n,1)*[1000000 1000000]];
+    elseif (~P.Control) && (P.DogInternal)
+        P.Control = 1;
+        P.nu = 1000000000;
+        P.nu = [P.nu_dog P.nu_dog; ones(P.N-1,1)*[P.nu P.nu]];
+    elseif (P.Control) && (P.DogInternal)
+        P.nu = [P.nu_dog P.nu_dog; ones(P.n-1,1)*[P.nu P.nu]; ones(P.N-P.n,1)*[1000000 1000000]];
+    else
+        P.Vd = ones(P.N,1)*P.Vd;
+        P.nu = [ones(P.n,1)*[P.nu P.nu]; ones(P.N-P.n,1)*[1000000 1000000]];
+    end
+else                   % control whole flock
+    if (P.Control) && (P.DogExternal)
+        P.Vd = ones(P.N,1)*P.Vd;
+    elseif (~P.Control) && (P.DogInternal)
+        P.Control = 1;
+        P.nu = 1000000000;
+        P.nu = [P.nu_dog P.nu_dog; ones(P.N-1,1)*[P.nu P.nu]];
+    elseif (P.Control) && (P.DogInternal)
+        P.nu = [P.nu_dog P.nu_dog; ones(P.N-1,1)*[P.nu P.nu]];
+    else
+        P.Vd = ones(P.N,1)*P.Vd;
+    end
 end
 
 if (P.DogInternal)
