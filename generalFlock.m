@@ -53,6 +53,8 @@ P.d = 5;      % distance for boundary force
 P.Control = 1;              % toggle control on flock
 P.Vd = [1 0];             % desired velocity of flock
 P.nu = 0.01;              % control penalty for flock
+P.n = 100;                  % number of controlled birds (less than or equal to P.N)
+% P.n = P.N;               % uncomment for full control (instead of sparse)
 
 % External Dog
 P.DogExternal = 0;          % toggle external dog
@@ -284,7 +286,8 @@ for n=0:P.dt:t
     if shouldPlot
         quiver(X(:,1),X(:,2),V(:,1),V(:,2),0,'linewidth',1.5)
         if (follow)
-            axis([centerXx-window-M centerXx+window+M centerXy-window-M centerXy+window+M],'square');         %window size
+            axis([centerXx-window-M centerXx+window+M centerXy-window-M centerXy+window+M],'square');   %window size
+            grid on;
         else
             axis([-window-M window+M -window-M window+M],'square');
         end
