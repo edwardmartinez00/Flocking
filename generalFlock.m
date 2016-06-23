@@ -68,7 +68,7 @@ P.DogInternal = 1;          % toggle internal dog
 P.nu_dog = 0.001;            % control penalty for internal dog
 
 % Dog
-P.d = 5;                  % distance where birds "feel" dog
+P.d_dog = 5;                  % distance where birds "feel" dog
 P.sD = 10;                 % strength of dog repulsion      
 P.neighbors = 1;            % dog follows closest bird if 0, follows center of "neighborhood" if 1
 P.neighborhood = 6;         % dog follows birds within neighborhood
